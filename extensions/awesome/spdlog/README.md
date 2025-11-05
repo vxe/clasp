@@ -1,10 +1,10 @@
-# fmt Bindings for Clasp
+# spdlog Bindings for Clasp
 
-Auto-generated clbind bindings for [fmt](https://github.com/fmtlib/fmt.git).
+Auto-generated clbind bindings for [spdlog](https://github.com/gabime/spdlog.git).
 
 ## Description
 
-A modern formatting library
+Fast C++ logging library
 
 ## License
 
@@ -18,7 +18,7 @@ To regenerate:
 
 ```bash
 cd clasp
-python3 tools/bindgen/generate_bindings.py --repo fmt
+python3 tools/bindgen/generate_bindings.py --repo spdlog
 ```
 
 ## Building
@@ -32,11 +32,11 @@ make -j$(nproc)
 ## Testing
 
 ```bash
-clasp --load tests/test-fmt.lisp
+clasp --load tests/test-spdlog.lisp
 ```
 
 ## Metadata
 
 - Generator version: 0.1.0
-- Source commit: e69e5f977d458f2650bb346dadf2ad30c5320281
+- Source commit: 7c02e204c92545f869e2f04edaab1f19fe8b19fd
 - Generated: 2025-11-05

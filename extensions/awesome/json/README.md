@@ -1,10 +1,10 @@
-# fmt Bindings for Clasp
+# json Bindings for Clasp
 
-Auto-generated clbind bindings for [fmt](https://github.com/fmtlib/fmt.git).
+Auto-generated clbind bindings for [json](https://github.com/nlohmann/json.git).
 
 ## Description
 
-A modern formatting library
+JSON for Modern C++
 
 ## License
 
@@ -18,7 +18,7 @@ To regenerate:
 
 ```bash
 cd clasp
-python3 tools/bindgen/generate_bindings.py --repo fmt
+python3 tools/bindgen/generate_bindings.py --repo json
 ```
 
 ## Building
@@ -32,11 +32,11 @@ make -j$(nproc)
 ## Testing
 
 ```bash
-clasp --load tests/test-fmt.lisp
+clasp --load tests/test-json.lisp
 ```
 
 ## Metadata
 
 - Generator version: 0.1.0
-- Source commit: e69e5f977d458f2650bb346dadf2ad30c5320281
+- Source commit: 9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03
 - Generated: 2025-11-05
