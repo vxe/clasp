@@ -19,3 +19,4 @@ apptainer/
 build/
 docs/
 tools/
+!tools/bindgen/
