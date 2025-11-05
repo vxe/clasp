@@ -147,6 +147,7 @@ jobs:
           context: .
           file: ci/docker/Dockerfile.bindgen
           tags: clasp-bindgen:latest
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: false
