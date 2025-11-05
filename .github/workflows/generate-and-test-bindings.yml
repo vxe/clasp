@@ -1,0 +1,158 @@
+name: Generate and Test Clbind Bindings
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+    paths:
+      - 'tools/bindgen/**'
+      - 'extensions/awesome/**'
+      - '.github/workflows/generate-and-test-bindings.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'tools/bindgen/**'
+      - 'extensions/awesome/**'
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: 'Specific repo to generate (leave empty for all)'
+        required: false
+        default: ''
+
+jobs:
+  generate-bindings:
+    name: Generate Bindings
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            build-essential \
+            clang-15 \
+            llvm-15-dev \
+            libclang-15-dev
+
+      - name: Install Python dependencies
+        run: |
+          pip3 install -r tools/bindgen/requirements.txt
+
+      - name: Generate bindings (all repos)
+        if: github.event.inputs.repo == ''
+        run: |
+          python3 tools/bindgen/generate_bindings.py --all --verbose
+
+      - name: Generate bindings (specific repo)
+        if: github.event.inputs.repo != ''
+        run: |
+          python3 tools/bindgen/generate_bindings.py \
+            --repo "${{ github.event.inputs.repo }}" \
+            --verbose
+
+      - name: Check for uncommitted changes
+        id: check_changes
+        run: |
+          if [ -n "$(git status --porcelain extensions/awesome/)" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Generated files have changed:"
+            git --no-pager diff extensions/awesome/
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected in generated files"
+          fi
+
+      - name: Upload generated bindings
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-bindings
+          path: extensions/awesome/
+          retention-days: 7
+
+      - name: Fail if generated files changed (on PR)
+        if: github.event_name == 'pull_request' && steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "Error: Generated files have changed but were not committed!"
+          echo "Please run the generator locally and commit the changes:"
+          echo "  python3 tools/bindgen/generate_bindings.py --all"
+          exit 1
+
+      - name: Fail if generated files changed (on push to main)
+        if: github.ref == 'refs/heads/main' && steps.check_changes.outputs.changes == 'true'
+        run: |
+          echo "Error: Generated files on main branch are out of sync!"
+          echo "Please regenerate bindings and push the changes."
+          exit 1
+
+  test-bindings:
+    name: Test Bindings
+    runs-on: ubuntu-latest
+    needs: generate-bindings
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download generated bindings
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-bindings
+          path: extensions/awesome/
+
+      - name: Run binding tests
+        run: |
+          echo "Running binding tests..."
+          # Note: This would require clasp to be built/installed
+          # For now, just verify structure
+          for dir in extensions/awesome/*/; do
+            if [ -d "$dir" ]; then
+              echo "Checking $dir..."
+              test -f "$dir/README.md" || echo "Warning: Missing README in $dir"
+              test -f "$dir/METADATA" || echo "Warning: Missing METADATA in $dir"
+              test -d "$dir/src" || echo "Warning: Missing src/ in $dir"
+              test -d "$dir/lisp" || echo "Warning: Missing lisp/ in $dir"
+              test -d "$dir/tests" || echo "Warning: Missing tests/ in $dir"
+            fi
+          done
+          echo "Structure checks complete!"
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build bindgen Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ci/docker/Dockerfile.bindgen
+          tags: clasp-bindgen:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: false
+
+      - name: Test Docker image
+        run: |
+          docker run --rm clasp-bindgen:latest python3 --version
+          docker run --rm clasp-bindgen:latest clang --version
+          docker run --rm clasp-bindgen:latest pip3 list | grep libclang

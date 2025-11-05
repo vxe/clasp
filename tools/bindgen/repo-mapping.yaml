@@ -1,0 +1,112 @@
+# Configuration for awesome-cpp library bindings generation
+# Each entry describes a C++ library to generate clbind bindings for
+
+version: "0.1"
+
+libraries:
+  - name: fmt
+    repo: https://github.com/fmtlib/fmt.git
+    checkout: "10.2.1"  # Stable tag
+    description: "A modern formatting library"
+    license: MIT
+    headers_path: include
+    build_type: cmake
+    cmake_options:
+      - "-DFMT_DOC=OFF"
+      - "-DFMT_TEST=OFF"
+      - "-DFMT_INSTALL=ON"
+    expose:
+      namespaces:
+        - fmt
+      classes:
+        - fmt::format_error
+        - fmt::system_error
+      functions:
+        - fmt::format
+        - fmt::print
+        - fmt::vformat
+    exclude:
+      namespaces:
+        - fmt::detail
+        - fmt::internal
+      patterns:
+        - ".*_internal.*"
+        - ".*detail.*"
+    package_name: "AWESOME-FMT"
+    lisp_package: "awesome-fmt"
+
+  - name: json
+    repo: https://github.com/nlohmann/json.git
+    checkout: "v3.11.3"
+    description: "JSON for Modern C++"
+    license: MIT
+    headers_path: include
+    build_type: cmake
+    header_only: true
+    cmake_options:
+      - "-DJSON_BuildTests=OFF"
+      - "-DJSON_Install=ON"
+    expose:
+      namespaces:
+        - nlohmann
+      classes:
+        - nlohmann::json
+        - nlohmann::json::parse_error
+        - nlohmann::json::type_error
+      functions:
+        - nlohmann::json::parse
+    exclude:
+      namespaces:
+        - nlohmann::detail
+      patterns:
+        - ".*_detail.*"
+        - ".*internal.*"
+    package_name: "AWESOME-JSON"
+    lisp_package: "awesome-json"
+
+  - name: spdlog
+    repo: https://github.com/gabime/spdlog.git
+    checkout: "v1.13.0"
+    description: "Fast C++ logging library"
+    license: MIT
+    headers_path: include
+    build_type: cmake
+    cmake_options:
+      - "-DSPDLOG_BUILD_TESTS=OFF"
+      - "-DSPDLOG_BUILD_EXAMPLE=OFF"
+      - "-DSPDLOG_INSTALL=ON"
+    expose:
+      namespaces:
+        - spdlog
+      classes:
+        - spdlog::logger
+        - spdlog::sink
+      functions:
+        - spdlog::info
+        - spdlog::warn
+        - spdlog::error
+        - spdlog::debug
+        - spdlog::critical
+        - spdlog::get
+        - spdlog::set_level
+    exclude:
+      namespaces:
+        - spdlog::details
+        - spdlog::sinks::details
+      patterns:
+        - ".*_details.*"
+        - ".*_mt$"  # Skip multithreaded variants for now
+        - ".*_st$"
+    package_name: "AWESOME-SPDLOG"
+    lisp_package: "awesome-spdlog"
+
+# Global settings
+settings:
+  output_dir: "extensions/awesome"
+  temp_dir: "/tmp/clbind-gen"
+  generator_version: "0.1.0"
+  clang_args:
+    - "-std=c++17"
+    - "-stdlib=libc++"
+  max_symbols_per_file: 100
+  verbose: true

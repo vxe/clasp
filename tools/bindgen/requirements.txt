@@ -1,0 +1,8 @@
+# Python dependencies for clbind binding generator
+
+# Core dependencies
+PyYAML>=6.0
+libclang>=16.0  # Python bindings for clang
+
+# Optional but recommended
+colorama>=0.4.6  # Colored terminal output

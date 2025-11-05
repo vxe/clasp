@@ -1,0 +1,42 @@
+# Dockerfile for clbind binding generation
+# Provides a reproducible environment for generating and testing bindings
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install base dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    clang-15 \
+    llvm-15 \
+    libclang-15-dev \
+    python3 \
+    python3-pip \
+    python3-dev \
+    wget \
+    curl \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set up alternatives for clang
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-15 100 \
+    && update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-15 100 \
+    && update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-15 100
+
+# Install Python dependencies
+COPY tools/bindgen/requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# Set up working directory
+WORKDIR /workspace
+
+# Environment variables
+ENV CC=clang
+ENV CXX=clang++
+ENV LLVM_CONFIG=llvm-config-15
+
+# Entry point
+CMD ["/bin/bash"]
